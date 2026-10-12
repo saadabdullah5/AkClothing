@@ -9,6 +9,7 @@ import { useCart } from "@/lib/CartContext";
 import { useWishlist } from "@/lib/WishlistContext";
 import StarRating from "./StarRating";
 import ReviewsSection from "./ReviewsSection";
+import ProductPhotoPreview from "./ProductPhotoPreview";
 import { isAvailable, selectColorVariant, variantImages } from "@/lib/product-variants";
 
 const LOW_STOCK_THRESHOLD = 5;
@@ -25,6 +26,7 @@ export default function ProductDetail({ product }: { product: Product }) {
   const { isWishlisted, toggle } = useWishlist();
 
   const [activeImage, setActiveImage] = useState(0);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const variant = product.variants.find((v) => v.id === selectedId) ?? product.variants.find(isAvailable) ?? product.variants[0];
   const size = variant?.size ?? "";
@@ -40,6 +42,7 @@ export default function ProductDetail({ product }: { product: Product }) {
   function selectVariant(next: ProductVariant | undefined) {
     if (!next) return;
     setSelectedId(next.id);
+    setPreviewOpen(false);
     setActiveImage(0);
     setQty(1);
     setAdded(false);
@@ -82,9 +85,10 @@ export default function ProductDetail({ product }: { product: Product }) {
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] lg:gap-12">
+      {previewOpen && images.length > 0 && <ProductPhotoPreview images={images} index={activeImage} title={`${product.name} — ${color}`} onSelect={setActiveImage} onClose={() => setPreviewOpen(false)} />}
       <div className="relative grid grid-cols-2 gap-2 self-start">
         {images.length > 0 ? images.map((img, i) => (
-          <button key={img.id} type="button" aria-label={`Select photo ${i + 1}`} aria-pressed={i === activeImage} onClick={() => setActiveImage(i)} className={`rang-card relative aspect-[3/4] overflow-hidden text-left ${i === activeImage ? "ring-2 ring-brand ring-offset-2" : ""}`}>
+          <button key={img.id} type="button" aria-label={`Enlarge photo ${i + 1}`} aria-haspopup="dialog" onClick={() => { setActiveImage(i); setPreviewOpen(true); }} className={`rang-card relative aspect-[3/4] cursor-zoom-in overflow-hidden text-left ${i === activeImage ? "ring-2 ring-brand ring-offset-2" : ""}`}>
             <Image src={img.url} alt={img.altText ?? product.name} fill className="object-cover transition-transform duration-500 hover:scale-105" />
           </button>
         )) : (
