@@ -107,7 +107,7 @@ const variantInputSchema = z.object({
   size: z.string().min(1),
   color: z.string().min(1),
   sku: z.string().min(1),
-  priceOverride: z.number().optional(),
+  priceOverride: z.number().positive().optional(),
   stockQty: z.number().int().min(0).default(0),
 });
 
@@ -240,7 +240,7 @@ const updateVariantSchema = z.object({
   sku: z.string().min(1).optional(),
   stockQty: z.number().int().min(0).optional(),
   isOutOfStock: z.boolean().optional(),
-  priceOverride: z.number().nullable().optional(),
+  priceOverride: z.number().positive().nullable().optional(),
 });
 
 // PATCH /api/products/:id/variants/:variantId — admin: covers both the inline
@@ -252,7 +252,7 @@ router.patch(
   asyncHandler(async (req, res) => {
     const input = updateVariantSchema.parse(req.body);
     const variant = await prisma.productVariant.update({
-      where: { id: req.params.variantId },
+      where: { id: req.params.variantId, productId: req.params.id },
       data: input,
     });
     res.json(variant);
@@ -317,11 +317,31 @@ router.post(
   requirePermission("PRODUCTS"),
   asyncHandler(async (req, res) => {
     const input = addImageSchema.parse(req.body);
+    if (input.variantId && !await prisma.productVariant.findFirst({ where: { id: input.variantId, productId: req.params.id } })) {
+      throw new AppError(400, "The photo variant must belong to this product");
+    }
     const position = await prisma.productImage.count({ where: { productId: req.params.id } });
     const image = await prisma.productImage.create({
       data: { productId: req.params.id, url: input.url, altText: input.altText, variantId: input.variantId, position },
     });
     res.status(201).json(image);
+  })
+);
+
+router.patch(
+  "/:id/images/:imageId",
+  authenticate,
+  requirePermission("PRODUCTS"),
+  asyncHandler(async (req, res) => {
+    const { variantId } = z.object({ variantId: z.string().uuid().nullable() }).parse(req.body);
+    if (variantId && !await prisma.productVariant.findFirst({ where: { id: variantId, productId: req.params.id } })) {
+      throw new AppError(400, "The photo variant must belong to this product");
+    }
+    const image = await prisma.productImage.update({
+      where: { id: req.params.imageId, productId: req.params.id },
+      data: { variantId },
+    });
+    res.json(image);
   })
 );
 

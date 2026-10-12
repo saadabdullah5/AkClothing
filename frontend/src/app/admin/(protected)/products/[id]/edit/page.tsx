@@ -12,6 +12,7 @@ interface NewVariantRow {
   color: string;
   sku: string;
   stockQty: number;
+  priceOverride: string;
 }
 
 // Flattens the department/sub-category tree into a single list, e.g. "Men (General)",
@@ -39,7 +40,7 @@ export default function EditProductPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [newVariant, setNewVariant] = useState<NewVariantRow>({ size: "", color: "", sku: "", stockQty: 0 });
+  const [newVariant, setNewVariant] = useState<NewVariantRow>({ size: "", color: "", sku: "", stockQty: 0, priceOverride: "" });
 
   async function load() {
     if (!token) return;
@@ -115,9 +116,9 @@ export default function EditProductPage() {
       await apiFetch(`/products/${id}/variants`, {
         method: "POST",
         token,
-        body: JSON.stringify(newVariant),
+        body: JSON.stringify({ ...newVariant, priceOverride: newVariant.priceOverride === "" ? undefined : Number(newVariant.priceOverride) }),
       });
-      setNewVariant({ size: "", color: "", sku: "", stockQty: 0 });
+      setNewVariant({ size: "", color: "", sku: "", stockQty: 0, priceOverride: "" });
       load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not add variant");
@@ -149,6 +150,19 @@ export default function EditProductPage() {
       load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not remove image");
+    }
+  }
+
+  async function assignImage(imageId: string, variantId: string) {
+    if (!token) return;
+    setError(null);
+    try {
+      await apiFetch(`/products/${id}/images/${imageId}`, {
+        method: "PATCH", token, body: JSON.stringify({ variantId: variantId || null }),
+      });
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not assign photo");
     }
   }
 
@@ -236,11 +250,16 @@ export default function EditProductPage() {
       </form>
       <div className="rounded-xl border border-ink/15 bg-surface p-5 shadow-sm">
         <h2 className="mb-3 font-semibold">Product Images</h2>
+        <p className="mb-3 text-sm text-ink-soft">Assign each photo to its color. These photos appear when shoppers select that color, across all its sizes. General photos are used for colors without assigned photos.</p>
         <div className="flex flex-wrap gap-3">
           {product.images.map((img) => (
             <div key={img.id} className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={img.url} alt="" className="h-36 w-36 rounded-lg border border-ink/15 object-contain" />
+              <select aria-label="Photo color" className="rang-input mt-2 w-36 text-sm" value={product.variants.find((v) => v.id === img.variantId)?.color ?? ""} onChange={(e) => assignImage(img.id, product.variants.find((v) => v.color === e.target.value)?.id ?? "")}>
+                <option value="">General photo</option>
+                {Array.from(new Set(product.variants.map((v) => v.color))).map((color) => <option key={color} value={color}>{color}</option>)}
+              </select>
               <button
                 onClick={() => deleteImage(img.id)}
                 aria-label="Remove image"
@@ -257,6 +276,7 @@ export default function EditProductPage() {
 
       <div className="rounded-xl border border-ink/15 bg-surface p-5 shadow-sm">
         <h2 className="mb-3 font-semibold">Sizes, Colors &amp; Stock</h2>
+        <p className="mb-3 text-sm text-ink-soft">Each row has independent pricing and inventory. Leave price blank to use the base price. Changes save when you leave a field.</p>
         <div className="space-y-2">
           {product.variants.map((v) => (
             <div key={v.id} className="flex flex-wrap items-center gap-2">
@@ -285,6 +305,7 @@ export default function EditProductPage() {
                 placeholder="Stock"
                 className="rang-input w-20 py-1.5"
               />
+              <input key={`${v.id}-${v.priceOverride}`} type="number" min="0.01" step="0.01" aria-label={`Price for ${v.color} ${v.size}`} defaultValue={v.priceOverride ?? ""} placeholder={`Rs. ${product.basePrice}`} onBlur={(e) => { if (!e.target.checkValidity()) return; const price = e.target.value === "" ? null : Number(e.target.value); if (price !== (v.priceOverride === null ? null : Number(v.priceOverride))) void saveVariant(v.id, { priceOverride: price }); }} className="rang-input w-32 py-1.5" />
               <button
                 onClick={() => saveVariant(v.id, { isOutOfStock: !v.isOutOfStock })}
                 className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
@@ -331,6 +352,7 @@ export default function EditProductPage() {
             onChange={(e) => setNewVariant({ ...newVariant, stockQty: Number(e.target.value) })}
             className="rang-input w-20 py-1.5"
           />
+          <input type="number" min="0.01" step="0.01" aria-label="New variant price" placeholder="Price (Rs.)" value={newVariant.priceOverride} onChange={(e) => setNewVariant({ ...newVariant, priceOverride: e.target.value })} className="rang-input w-32 py-1.5" />
           <button type="submit" className="rang-btn-outline px-3 py-1.5">
             + Add Variant
           </button>

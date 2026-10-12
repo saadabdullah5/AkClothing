@@ -68,7 +68,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
   return (
     <div>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <ProductDetail product={product} />
+      <ProductDetail key={product.id} product={product} />
       <RelatedProducts products={related} />
     </div>
   );

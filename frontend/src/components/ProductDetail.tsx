@@ -4,20 +4,19 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
-import { Product } from "@/lib/types";
+import { Product, ProductVariant } from "@/lib/types";
 import { useCart } from "@/lib/CartContext";
 import { useWishlist } from "@/lib/WishlistContext";
 import StarRating from "./StarRating";
 import ReviewsSection from "./ReviewsSection";
+import { isAvailable, selectColorVariant, variantImages } from "@/lib/product-variants";
 
 const LOW_STOCK_THRESHOLD = 5;
 
 export default function ProductDetail({ product }: { product: Product }) {
-  const sizes = useMemo(() => Array.from(new Set(product.variants.map((v) => v.size))), [product]);
   const colors = useMemo(() => Array.from(new Set(product.variants.map((v) => v.color))), [product]);
 
-  const [size, setSize] = useState(sizes[0] ?? "");
-  const [color, setColor] = useState(colors[0] ?? "");
+  const [selectedId, setSelectedId] = useState(() => (product.variants.find(isAvailable) ?? product.variants[0])?.id);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
 
@@ -27,12 +26,24 @@ export default function ProductDetail({ product }: { product: Product }) {
 
   const [activeImage, setActiveImage] = useState(0);
 
-  const variant = product.variants.find((v) => v.size === size && v.color === color);
+  const variant = product.variants.find((v) => v.id === selectedId) ?? product.variants.find(isAvailable) ?? product.variants[0];
+  const size = variant?.size ?? "";
+  const color = variant?.color ?? "";
+  const sizes = Array.from(new Set(product.variants.filter((v) => v.color === color).map((v) => v.size)));
+  const images = variantImages(product, variant);
   const price = variant?.priceOverride ?? product.basePrice;
   const outOfStock = !variant || variant.isOutOfStock || variant.stockQty <= 0;
   const lowStock = !outOfStock && (variant?.stockQty ?? 0) <= LOW_STOCK_THRESHOLD;
-  const image = product.images[activeImage]?.url ?? product.images[0]?.url;
+  const image = images[activeImage]?.url ?? images[0]?.url;
   const wishlisted = isWishlisted(product.slug);
+
+  function selectVariant(next: ProductVariant | undefined) {
+    if (!next) return;
+    setSelectedId(next.id);
+    setActiveImage(0);
+    setQty(1);
+    setAdded(false);
+  }
 
   const [whatsappNumber, setWhatsappNumber] = useState(process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "");
   useEffect(() => {
@@ -49,7 +60,7 @@ export default function ProductDetail({ product }: { product: Product }) {
   );
 
   function handleAddToCart() {
-    if (!variant) return;
+    if (!variant || outOfStock) return;
     addLine({
       variantId: variant.id,
       productSlug: product.slug,
@@ -57,13 +68,14 @@ export default function ProductDetail({ product }: { product: Product }) {
       size,
       color,
       unitPrice: Number(price),
-      qty,
+      qty: Math.min(qty, variant.stockQty),
       image,
     });
     setAdded(true);
   }
 
   function handleBuyNow() {
+    if (outOfStock) return;
     handleAddToCart();
     router.push("/cart");
   }
@@ -71,8 +83,8 @@ export default function ProductDetail({ product }: { product: Product }) {
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] lg:gap-12">
       <div className="relative grid grid-cols-2 gap-2 self-start">
-        {product.images.length > 0 ? product.images.map((img, i) => (
-          <button key={img.id} type="button" onClick={() => setActiveImage(i)} className={`rang-card relative aspect-[3/4] overflow-hidden text-left ${i === activeImage ? "ring-2 ring-brand ring-offset-2" : ""}`}>
+        {images.length > 0 ? images.map((img, i) => (
+          <button key={img.id} type="button" aria-label={`Select photo ${i + 1}`} aria-pressed={i === activeImage} onClick={() => setActiveImage(i)} className={`rang-card relative aspect-[3/4] overflow-hidden text-left ${i === activeImage ? "ring-2 ring-brand ring-offset-2" : ""}`}>
             <Image src={img.url} alt={img.altText ?? product.name} fill className="object-cover transition-transform duration-500 hover:scale-105" />
           </button>
         )) : (
@@ -114,7 +126,9 @@ export default function ProductDetail({ product }: { product: Product }) {
             {sizes.map((s) => (
               <button
                 key={s}
-                onClick={() => setSize(s)}
+                type="button"
+                aria-pressed={s === size}
+                onClick={() => selectVariant(product.variants.find((v) => v.size === s && v.color === color))}
                 className={`rounded-lg border px-3.5 py-1.5 text-sm font-medium transition ${
                   s === size
                     ? "border-brand bg-brand text-white shadow-soft"
@@ -133,7 +147,9 @@ export default function ProductDetail({ product }: { product: Product }) {
             {colors.map((c) => (
               <button
                 key={c}
-                onClick={() => setColor(c)}
+                type="button"
+                aria-pressed={c === color}
+                onClick={() => selectVariant(selectColorVariant(product.variants, c, size))}
                 className={`rounded-lg border px-3.5 py-1.5 text-sm font-medium transition ${
                   c === color
                     ? "border-brand bg-brand text-white shadow-soft"
@@ -155,7 +171,8 @@ export default function ProductDetail({ product }: { product: Product }) {
               min={1}
               max={variant?.stockQty}
               value={qty}
-              onChange={(e) => setQty(Math.max(1, Number(e.target.value)))}
+              aria-label="Quantity"
+              onChange={(e) => setQty(Math.min(variant?.stockQty ?? 1, Math.max(1, Math.floor(Number(e.target.value)) || 1)))}
               className="rang-input w-16 py-2.5"
             />
             <button onClick={handleAddToCart} className="rang-btn-primary">

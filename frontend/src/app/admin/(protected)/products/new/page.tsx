@@ -12,6 +12,7 @@ interface VariantRow {
   color: string;
   sku: string;
   stockQty: number;
+  priceOverride: string;
 }
 
 // Flattens the department/sub-category tree into a single list, e.g. "Men (General)",
@@ -39,7 +40,7 @@ export default function NewProductPage() {
   const [categoryId, setCategoryId] = useState("");
   const [status, setStatus] = useState<"ACTIVE" | "DRAFT">("ACTIVE");
   const [featured, setFeatured] = useState(false);
-  const [variants, setVariants] = useState<VariantRow[]>([{ size: "M", color: "Black", sku: "", stockQty: 10 }]);
+  const [variants, setVariants] = useState<VariantRow[]>([{ size: "M", color: "Black", sku: "", stockQty: 10, priceOverride: "" }]);
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +61,7 @@ export default function NewProductPage() {
   }
 
   function addVariantRow() {
-    setVariants((prev) => [...prev, { size: "", color: "", sku: "", stockQty: 0 }]);
+    setVariants((prev) => [...prev, { size: "", color: "", sku: "", stockQty: 0, priceOverride: "" }]);
   }
 
   function removeVariantRow(index: number) {
@@ -96,7 +97,7 @@ export default function NewProductPage() {
           categoryId,
           status,
           featured,
-          variants: variants.map((v) => ({ ...v, stockQty: Number(v.stockQty) })),
+          variants: variants.map((v) => ({ ...v, priceOverride: v.priceOverride === "" ? undefined : Number(v.priceOverride), stockQty: Number(v.stockQty) })),
           images: images.map((url) => ({ url })),
         }),
       });
@@ -149,6 +150,7 @@ export default function NewProductPage() {
 
         <div>
           <label className="mb-2 block text-sm font-medium">Sizes, Colors &amp; Stock</label>
+          <p className="mb-3 text-sm text-ink-soft">Add one row per size and color. Each has its own SKU, stock and price. Leave price blank to use the base price. Assign color photos on the edit page after saving.</p>
           <div className="space-y-2">
             {variants.map((v, i) => (
               <div key={i} className="flex flex-wrap gap-2">
@@ -177,8 +179,10 @@ export default function NewProductPage() {
                   onChange={(e) => updateVariant(i, { stockQty: Number(e.target.value) })}
                   className="rang-input w-20 py-1.5"
                 />
+                <input type="number" min="0.01" step="0.01" aria-label={`Price for variant ${i + 1}`} placeholder="Price (Rs.)" value={v.priceOverride} onChange={(e) => updateVariant(i, { priceOverride: e.target.value })} className="rang-input w-32 py-1.5" />
                 <button
                   type="button"
+                  disabled={variants.length === 1}
                   onClick={() => removeVariantRow(i)}
                   className="rounded-full px-2 text-sm text-red-600 transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
                 >

@@ -1,5 +1,6 @@
 export interface ProductImage {
   id: string;
+  variantId?: string | null;
   url: string;
   altText: string | null;
 }
