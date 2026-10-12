@@ -13,6 +13,7 @@ interface VariantRow {
   sku: string;
   stockQty: number;
   priceOverride: string;
+  images: string[];
 }
 
 // Flattens the department/sub-category tree into a single list, e.g. "Men (General)",
@@ -40,7 +41,7 @@ export default function NewProductPage() {
   const [categoryId, setCategoryId] = useState("");
   const [status, setStatus] = useState<"ACTIVE" | "DRAFT">("ACTIVE");
   const [featured, setFeatured] = useState(false);
-  const [variants, setVariants] = useState<VariantRow[]>([{ size: "M", color: "Black", sku: "", stockQty: 10, priceOverride: "" }]);
+  const [variants, setVariants] = useState<VariantRow[]>([{ size: "M", color: "Black", sku: "", stockQty: 10, priceOverride: "", images: [] }]);
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,29 +62,33 @@ export default function NewProductPage() {
   }
 
   function addVariantRow() {
-    setVariants((prev) => [...prev, { size: "", color: "", sku: "", stockQty: 0, priceOverride: "" }]);
+    setVariants((prev) => [...prev, { size: "", color: "", sku: "", stockQty: 0, priceOverride: "", images: [] }]);
   }
 
   function removeVariantRow(index: number) {
     setVariants((prev) => prev.filter((_, i) => i !== index));
   }
 
-  async function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>, variantIndex?: number) {
     if (!token || !e.target.files?.length) return;
+    const input = e.target;
     setUploading(true);
+    setError(null);
     try {
       const urls = await Promise.all(Array.from(e.target.files).map((file) => uploadImage(file, token)));
-      setImages((prev) => [...prev, ...urls]);
+      if (variantIndex === undefined) setImages((prev) => [...prev, ...urls]);
+      else setVariants((prev) => prev.map((v, i) => i === variantIndex ? { ...v, images: [...v.images, ...urls] } : v));
     } catch {
       setError("Image upload failed — check your Cloudinary settings.");
     } finally {
       setUploading(false);
+      input.value = "";
     }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!token) return;
+    if (!token || uploading || submitting) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -97,7 +102,7 @@ export default function NewProductPage() {
           categoryId,
           status,
           featured,
-          variants: variants.map((v) => ({ ...v, priceOverride: v.priceOverride === "" ? undefined : Number(v.priceOverride), stockQty: Number(v.stockQty) })),
+          variants: variants.map((v) => ({ ...v, images: v.images.map((url) => ({ url })), priceOverride: v.priceOverride === "" ? undefined : Number(v.priceOverride), stockQty: Number(v.stockQty) })),
           images: images.map((url) => ({ url })),
         }),
       });
@@ -150,10 +155,11 @@ export default function NewProductPage() {
 
         <div>
           <label className="mb-2 block text-sm font-medium">Sizes, Colors &amp; Stock</label>
-          <p className="mb-3 text-sm text-ink-soft">Add one row per size and color. Each has its own SKU, stock and price. Leave price blank to use the base price. Assign color photos on the edit page after saving.</p>
+          <p className="mb-3 text-sm text-ink-soft">Add one row per size and color, with its own price, stock and photos. Photos are shared across sizes of the same color. Leave price blank to use the base price.</p>
           <div className="space-y-2">
             {variants.map((v, i) => (
-              <div key={i} className="flex flex-wrap gap-2">
+              <fieldset key={i} disabled={uploading || submitting} className="flex flex-wrap gap-2 rounded-lg border border-ink/15 p-3">
+                <legend className="px-1 text-sm font-medium">Variant {i + 1}{v.color ? `: ${v.color}` : ""}</legend>
                 <input
                   placeholder="Size (e.g. M)"
                   value={v.size}
@@ -188,17 +194,29 @@ export default function NewProductPage() {
                 >
                   Remove
                 </button>
-              </div>
+                <div className="w-full">
+                  <label className="block text-sm font-medium">Variant photos
+                    <input type="file" accept="image/*" multiple onChange={(e) => handleImageSelect(e, i)} className="mt-2 block w-full text-sm" />
+                  </label>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {v.images.map((url, photoIndex) => <div key={`${url}-${photoIndex}`} className="relative">
+                      <img src={url} alt={`${v.color || "Variant"} photo ${photoIndex + 1}`} className="h-24 w-24 rounded border border-ink/15 object-cover" />
+                      <button type="button" aria-label={`Remove variant ${i + 1} photo ${photoIndex + 1}`} onClick={() => updateVariant(i, { images: v.images.filter((_, index) => index !== photoIndex) })} className="absolute right-0 top-0 rounded bg-white px-2 text-red-600">×</button>
+                    </div>)}
+                  </div>
+                </div>
+              </fieldset>
             ))}
           </div>
-          <button type="button" onClick={addVariantRow} className="mt-2 text-sm font-medium text-brand underline">
+          <button type="button" disabled={uploading || submitting} onClick={addVariantRow} className="mt-2 text-sm font-medium text-brand underline">
             + Add size/color
           </button>
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium">Product Images</label>
-          <input type="file" accept="image/*" multiple onChange={handleImageSelect} className="text-sm" />
+          <label className="mb-2 block text-sm font-medium">General product images (optional)</label>
+          <p className="mb-2 text-sm text-ink-soft">Used only for colors without their own photos.</p>
+          <input type="file" accept="image/*" multiple disabled={uploading || submitting} onChange={(e) => handleImageSelect(e)} className="text-sm" />
           {uploading && <p className="mt-1 text-sm text-ink-soft">Uploading...</p>}
           <div className="mt-2 flex flex-wrap gap-2">
             {images.map((url) => (

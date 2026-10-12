@@ -144,7 +144,10 @@ export default function ProductDetail({ product }: { product: Product }) {
         <div className="mt-4">
           <p className="mb-2 text-sm font-semibold">Color</p>
           <div className="flex flex-wrap gap-2">
-            {colors.map((c) => (
+            {colors.map((c) => {
+              const colorVariant = selectColorVariant(product.variants, c, size);
+              const colorPhoto = variantImages(product, colorVariant)[0];
+              return (
               <button
                 key={c}
                 type="button"
@@ -156,9 +159,11 @@ export default function ProductDetail({ product }: { product: Product }) {
                     : "border-ink/25 hover:border-brand hover:text-brand"
                 }`}
               >
+                {colorPhoto && <span className="relative mb-1 block h-16 w-16 overflow-hidden rounded"><Image src={colorPhoto.url} alt={`${c} color`} fill sizes="64px" className="object-cover" /></span>}
                 {c}
               </button>
-            ))}
+              );
+            })}
           </div>
         </div>
 

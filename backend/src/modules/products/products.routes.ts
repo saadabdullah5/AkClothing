@@ -120,7 +120,9 @@ const createProductSchema = z.object({
   featured: z.boolean().default(false),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
-  variants: z.array(variantInputSchema).min(1),
+  variants: z.array(variantInputSchema.extend({
+    images: z.array(z.object({ url: z.string().url() })).default([]),
+  })).min(1),
   images: z.array(z.object({ url: z.string().url(), altText: z.string().optional() })).default([]),
 });
 
@@ -133,7 +135,8 @@ router.post(
     const input = createProductSchema.parse(req.body);
     const slug = slugify(input.name);
 
-    const product = await prisma.product.create({
+    const product = await prisma.$transaction(async (tx) => {
+    const created = await tx.product.create({
       data: {
         name: input.name,
         slug,
@@ -159,6 +162,18 @@ router.post(
         },
       },
       include: { variants: true, images: true },
+    });
+    const photos = input.variants.flatMap((variant) => {
+      const saved = created.variants.find((item) => item.sku === variant.sku)!;
+      return variant.images.map((image, position) => ({
+        productId: created.id, variantId: saved.id, url: image.url,
+        position: input.images.length + position,
+      }));
+    });
+    if (photos.length) await tx.productImage.createMany({ data: photos });
+    return tx.product.findUniqueOrThrow({
+      where: { id: created.id }, include: { variants: true, images: true },
+    });
     });
 
     res.status(201).json(product);
