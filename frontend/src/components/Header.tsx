@@ -91,6 +91,7 @@ export default function Header({ categories, logoUrl }: Props) {
         </Link>
 
         <div ref={navRef} className="hidden items-center gap-5 whitespace-nowrap text-xs font-medium text-ink lg:flex">
+          <Link href="/collections" className="py-2">All collections</Link>
           <div className="relative">
             <button className="inline-flex items-center gap-1 py-2" aria-expanded={openDropdown === 'catalog'} onClick={() => setOpenDropdown(openDropdown === 'catalog' ? null : 'catalog')}>Categories <span aria-hidden="true" className="relative top-px text-[10px] leading-none">&#8964;</span></button>
             {openDropdown === 'catalog' && <div className="rang-card absolute left-0 top-full z-10 max-h-96 min-w-56 overflow-y-auto p-2">

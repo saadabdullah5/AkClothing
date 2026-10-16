@@ -1,3 +1,6 @@
+import AnalyticsConsent from "@/components/AnalyticsConsent";
+import { getPublicCategories } from "@/lib/catalog";
+import { SITE_URL, jsonLd } from "@/lib/seo";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Roboto_Slab, Inter, Jost } from "next/font/google";
@@ -13,7 +16,7 @@ import { Category } from "@/lib/types";
 import { colorTokenVars, isValidHex } from "@/lib/color";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const siteUrl = SITE_URL;
 
 // Falls back to these when the admin hasn't customized branding yet — matches the
 // app's original hardcoded colors, so there's zero visual change out of the box.
@@ -45,7 +48,7 @@ const jost = Jost({
 
 async function getCategories(): Promise<Category[]> {
   try {
-    return await apiFetch<Category[]>("/categories");
+    return await getPublicCategories();
   } catch {
     return [];
   }
@@ -108,9 +111,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {branding.faviconUrl && <link rel="icon" href={branding.faviconUrl} />}
       </head>
       <body className="flex min-h-screen flex-col bg-paper font-sans text-ink transition-colors">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd({ "@context": "https://schema.org", "@graph": [{ "@type": "OnlineStore", "@id": `${SITE_URL}/#store`, name: "ak.shop", url: SITE_URL, ...(branding.logoUrl ? { logo: branding.logoUrl } : {}) }, { "@type": "WebSite", "@id": `${SITE_URL}/#website`, name: "ak.shop", url: SITE_URL, publisher: { "@id": `${SITE_URL}/#store` } }] }) }} />
         <Suspense fallback={null}>
           <PageViewTracker />
         </Suspense>
+        <AnalyticsConsent />
         <ThemeProvider>
           <CustomerAuthProvider>
             <WishlistProvider>

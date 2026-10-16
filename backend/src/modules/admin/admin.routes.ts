@@ -22,6 +22,21 @@ import {
 } from "./dashboard.service";
 
 const router = Router();
+router.get("/catalog-quality", authenticate, requirePermission("PRODUCTS"), asyncHandler(async (_req, res) => {
+  const products = await prisma.product.findMany({ where: { status: "ACTIVE" }, include: { variants: true, images: true, category: true } });
+  res.json(products.map(p => {
+    const facts = (p.facts ?? {}) as Record<string,string>;
+    const issues = [!p.images.length && "Missing photos", ...["fabric","construction","components","measurements","care","condition"].filter(k=>!facts[k]).map(k=>`Verify ${k}`), p.variants.some(v=>/all\s*cl/i.test(v.color)) && "Replace All clr with verified color options", products.filter(other=>other.description===p.description).length>1 && "Shared description: verify design differences", p.category.slug.startsWith("dune-preview-") && "Assign a real category"];
+    return { id:p.id,name:p.name,slug:p.slug,category:p.category.name,stock:p.variants.reduce((n,v)=>n+(v.isOutOfStock?0:v.stockQty),0),issues:issues.filter(Boolean) };
+  }).sort((a,b)=>b.stock-a.stock));
+}));
+router.get("/acquisition-outcomes", authenticate, requirePermission("REPORTS"), asyncHandler(async (req, res) => {
+  const days=z.coerce.number().int().min(1).max(365).default(90).parse(req.query.days);
+  const orders=await prisma.order.findMany({where:{createdAt:{gte:new Date(Date.now()-days*86400000)}},select:{status:true,total:true,acquisition:true}});
+  const groups=new Map<string,{channel:string;status:string;orders:number;orderValue:number}>();
+  for(const order of orders){const channel=(order.acquisition as {channel?:string}|null)?.channel??"UNATTRIBUTED";const key=`${channel}:${order.status}`;const row=groups.get(key)??{channel,status:order.status,orders:0,orderValue:0};row.orders++;row.orderValue+=Number(order.total);groups.set(key,row);}
+  res.json({days,currency:"PKR",rows:[...groups.values()],note:"Order value includes shipping. Only DELIVERED is delivered order revenue; refunds and margin need settlement/cost records."});
+}));
 router.get("/products", authenticate, requirePermission("PRODUCTS"), asyncHandler(async (req, res) => {
   const { q, status, page, categoryId } = z.object({ categoryId: z.string().uuid().optional(), q: z.string().default(""), status: z.enum(["ACTIVE", "DRAFT"]).optional(), page: z.coerce.number().int().min(1).default(1) }).parse(req.query);
   const where = { name: { contains: q }, ...(categoryId ? { categoryId } : {}), ...(status ? { status } : {}) };

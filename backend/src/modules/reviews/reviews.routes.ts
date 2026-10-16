@@ -66,6 +66,11 @@ router.post(
   authenticate,
   asyncHandler(async (req, res) => {
     const input = upsertSchema.parse(req.body);
+    const delivered = await prisma.order.findFirst({
+      where: { userId: req.user!.id, status: "DELIVERED", items: { some: { productId: input.productId } } },
+      select: { id: true },
+    });
+    if (!delivered) throw new AppError(403, "You can review this product after your account's order has been delivered.");
     const existing = await prisma.review.findFirst({
       where: { productId: input.productId, userId: req.user!.id, authorName: null },
     });

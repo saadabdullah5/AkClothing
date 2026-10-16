@@ -10,6 +10,7 @@ import { getCourierAdapter } from "@/modules/courier/courier.service";
 const router = Router();
 
 const checkoutSchema = z.object({
+  acquisition: z.object({ channel: z.enum(["DIRECT","ORGANIC","SOCIAL","EMAIL","PAID","REFERRAL","AI"]), landing: z.string().max(300).regex(/^\/(?:product\/[^/?#]+|shop|collections(?:\/[^/?#]+)?)?$/) }).optional(),
   customerName: z.string().min(2),
   customerPhone: z.string().min(7),
   customerEmail: z.string().email().optional().or(z.literal("")),

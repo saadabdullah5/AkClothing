@@ -1,3 +1,4 @@
+import { getPublicCategories } from "@/lib/catalog";
 import Link from "next/link";
 import { apiFetch } from "@/lib/api";
 import { Banner, Category, Collection, Product, Review } from "@/lib/types";
@@ -8,6 +9,7 @@ import CollectionsSection from "@/components/CollectionsSection";
 import ReviewsMarquee from "@/components/ReviewsMarquee";
 
 const DEFAULT_BAZAAR_LIMIT = 8;
+export const metadata = { alternates: { canonical: "https://akclothings.shop/" }, openGraph: { url: "https://akclothings.shop/" } };
 
 interface HomepageSettings {
   occasionEyebrow: string | null;
@@ -36,7 +38,7 @@ async function getTrendingProducts(limit: number): Promise<Product[]> {
 
 async function getCategories(): Promise<Category[]> {
   try {
-    return await apiFetch<Category[]>("/categories");
+    return await getPublicCategories();
   } catch {
     return [];
   }

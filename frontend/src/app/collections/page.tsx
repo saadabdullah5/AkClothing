@@ -1,38 +1,11 @@
 import Link from "next/link";
+import Image from "next/image";
+import { getCatalog, getPublicCategories } from "@/lib/catalog";
 import { apiFetch } from "@/lib/api";
-import { Collection } from "@/lib/types";
-
-async function getCollections(): Promise<Collection[]> {
-  try {
-    return await apiFetch<Collection[]>("/collections");
-  } catch {
-    return [];
-  }
-}
-
+import type { Collection } from "@/lib/types";
+import Breadcrumbs from "@/components/Breadcrumbs";
+export const metadata = { title: "Clothing & fabric collections in Pakistan", description: "Browse available clothing and fabric collections, compare current PKR prices and choose your size and color.", alternates: { canonical: "https://akclothings.shop/collections" } };
 export default async function CollectionsPage() {
-  const collections = await getCollections();
-
-  return (
-    <main className="mx-auto max-w-6xl px-4 py-14 font-rang">
-      <p className="rang-section-tag">The curated edit</p>
-      <h1 className="mt-2 font-display text-4xl font-bold text-ink">Collections</h1>
-      <p className="mt-3 max-w-xl text-sm text-ink-soft">Explore our considered edits, shaped around texture, occasion, and everyday style.</p>
-      {collections.length === 0 ? (
-        <div className="mt-12 rounded-2xl border border-ink/15 p-10 text-center text-ink-soft">Collections will appear here soon.</div>
-      ) : (
-        <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {collections.map((collection) => (
-            <Link key={collection.id} href={`/collections/${collection.slug}`} className="group">
-              <div className="overflow-hidden rounded-2xl bg-ink/5 aspect-[4/5]">
-                {collection.imageUrl ? <img src={collection.imageUrl} alt={collection.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" /> : <div className="h-full w-full bg-brand/20" />}
-              </div>
-              <h2 className="mt-4 text-xl font-semibold transition-colors group-hover:text-brand">{collection.name}</h2>
-              {collection.description && <p className="mt-2 text-sm text-ink-soft">{collection.description}</p>}
-            </Link>
-          ))}
-        </div>
-      )}
-    </main>
-  );
+ const [categories, products, curated] = await Promise.all([getPublicCategories(), getCatalog(), apiFetch<Collection[]>("/collections")]);
+ return <div><Breadcrumbs items={[{name:"Home",href:"/"},{name:"Collections",href:"/collections"}]} /><h1 className="text-3xl font-bold">Clothing & fabric collections</h1><p className="mt-3 text-ink-soft">Browse our current catalog by category. Check each product for its available colors, sizes and price.</p><div className="mt-8 grid grid-cols-2 gap-6 md:grid-cols-3">{categories.map(c=>{const photo=c.imageUrl || products.find(p=>p.category.id===c.id)?.images[0]?.url;return <Link key={c.id} href={`/shop?category=${encodeURIComponent(c.slug)}`} className="rang-card overflow-hidden">{photo&&<div className="relative aspect-[4/5]"><Image src={photo} alt={c.name} fill sizes="(max-width: 768px) 50vw, 33vw" className="object-cover" /></div>}<h2 className="p-4 font-semibold">{c.name}</h2></Link>})}{curated.map(c=><Link key={c.id} href={`/collections/${c.slug}`} className="rang-card p-5"><h2 className="font-semibold">{c.name}</h2>{c.description&&<p>{c.description}</p>}</Link>)}</div><Link href="/shop" className="mt-8 inline-block underline">Browse all {products.length} products</Link></div>;
 }

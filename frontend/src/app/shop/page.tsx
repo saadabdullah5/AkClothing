@@ -1,114 +1,43 @@
+import ProductListTracking from "@/components/ProductListTracking";
+import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { cache } from "react";
 import { apiFetch } from "@/lib/api";
-import { Category, Product } from "@/lib/types";
+import { Product } from "@/lib/types";
+import { getPublicCategories } from "@/lib/catalog";
+import { absoluteUrl, listingUrl, pageNumber } from "@/lib/seo";
 import ProductCard from "@/components/ProductCard";
 import ShopFilters from "@/components/ShopFilters";
-
-export const metadata = { title: "Shop" };
-
-interface Props {
-  searchParams: {
-    category?: string;
-    size?: string;
-    color?: string;
-    q?: string;
-    minPrice?: string;
-    maxPrice?: string;
-    sort?: string;
-  };
+import Breadcrumbs from "@/components/Breadcrumbs";
+type Params = Record<string, string | undefined>;
+const getProducts = cache((query: string) => apiFetch<{ items: Product[]; total: number }>(`/products?${query}`));
+async function listing(params: Params) {
+  const page = pageNumber(params.page);
+  if (page === null) notFound();
+  const categories = await getPublicCategories();
+  const category = params.category ? (await apiFetch<{slug:string;name:string}[]>("/categories")).find(c => c.slug === params.category) : undefined;
+  if (params.category && !category) notFound();
+  if (params.sort && !["newest", "price_asc", "price_desc"].includes(params.sort)) notFound();
+  for (const key of ["minPrice", "maxPrice"]) if (params[key] && (!Number.isFinite(Number(params[key])) || Number(params[key]) < 0)) notFound();
+  const query = new URLSearchParams(listingUrl(params, page).split("?")[1]);
+  query.set("pageSize", "24");
+  const data = await getProducts(query.toString());
+  if (page > 1 && (page - 1) * 24 >= data.total) notFound();
+  return { ...data, page, categories, category };
 }
-
-async function getCategories(): Promise<Category[]> {
-  try {
-    return await apiFetch<Category[]>("/categories");
-  } catch {
-    return [];
-  }
+export async function generateMetadata({ searchParams }: { searchParams: Params }): Promise<Metadata> {
+  const data = await listing(searchParams);
+  const title = searchParams.q ? `Search: ${searchParams.q}` : data.category?.name ?? "Clothing & fabrics in Pakistan";
+  const filtered = ["q", "size", "color", "minPrice", "maxPrice", "sort"].some(key => !!searchParams[key]);
+  const canonical = absoluteUrl(listingUrl({ category: searchParams.category }, data.page));
+  return { title: `${title}${data.page > 1 ? ` - Page ${data.page}` : ""}`, description: `Browse ${data.category?.name ?? "clothing and fabrics"} with current PKR prices, available colors and sizes. Order online from ak.shop in Pakistan.`, alternates: { canonical }, robots: filtered || data.total === 0 ? { index: false, follow: true } : undefined, openGraph: { url: canonical } };
 }
-
-async function getProducts(params: Props["searchParams"]): Promise<Product[]> {
-  const query = new URLSearchParams();
-  if (params.category) query.set("category", params.category);
-  if (params.size) query.set("size", params.size);
-  if (params.color) query.set("color", params.color);
-  if (params.q) query.set("q", params.q);
-  if (params.minPrice) query.set("minPrice", params.minPrice);
-  if (params.maxPrice) query.set("maxPrice", params.maxPrice);
-  if (params.sort) query.set("sort", params.sort);
-  try {
-    const { items } = await apiFetch<{ items: Product[] }>(`/products?${query.toString()}`);
-    return items;
-  } catch {
-    return [];
-  }
-}
-
-export default async function ShopPage({ searchParams }: Props) {
-  const [categories, products] = await Promise.all([getCategories(), getProducts(searchParams)]);
-
-  return (
-    <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
-      <aside className="md:sticky md:top-24 md:self-start">
-        <div className="rang-card p-4">
-          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-soft">Category</h3>
-          <ul className="space-y-1.5 text-sm">
-            <li>
-              <Link
-                href="/shop"
-                className={`block rounded px-2 py-1 transition-colors ${!searchParams.category ? "bg-brand/5 font-semibold text-brand" : "text-ink-soft hover:text-brand"}`}
-              >
-                All
-              </Link>
-            </li>
-            {categories
-              .filter((c) => !c.parentId)
-              .map((parent) => (
-                <li key={parent.id}>
-                  <Link
-                    href={`/shop?category=${parent.slug}`}
-                    className={`block rounded px-2 py-1 transition-colors ${searchParams.category === parent.slug ? "bg-brand/5 font-semibold text-brand" : "text-ink-soft hover:text-brand"}`}
-                  >
-                    {parent.name}
-                  </Link>
-                  {categories.filter((c) => c.parentId === parent.id).length > 0 && (
-                    <ul className="mt-1 space-y-1 border-l border-ink/15 pl-3">
-                      {categories
-                        .filter((c) => c.parentId === parent.id)
-                        .map((c) => (
-                          <li key={c.id}>
-                            <Link
-                              href={`/shop?category=${c.slug}`}
-                              className={`block rounded px-2 py-1 transition-colors ${searchParams.category === c.slug ? "font-semibold text-brand" : "text-ink-soft hover:text-brand"}`}
-                            >
-                              {c.name}
-                            </Link>
-                          </li>
-                        ))}
-                    </ul>
-                  )}
-                </li>
-              ))}
-          </ul>
-        </div>
-      </aside>
-
-      <div className="md:col-span-3">
-        <h1 className="mb-4 text-2xl font-bold">
-          {searchParams.q ? `Search results for "${searchParams.q}"` : "Shop"}
-        </h1>
-        <div className="rang-card mb-6 p-4">
-          <ShopFilters />
-        </div>
-        {products.length === 0 ? (
-          <p className="text-ink-soft">No products match these filters.</p>
-        ) : (
-          <div className="grid grid-cols-2 gap-6 sm:grid-cols-3">
-            {products.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+export default async function ShopPage({ searchParams }: { searchParams: Params }) {
+  const { items, total, page, categories, category } = await listing(searchParams);
+  return <div><ProductListTracking ids={items.map(p=>p.variants[0]?.id??p.id)} /><Breadcrumbs items={[{name:"Home",href:"/"},{name:"Collections",href:"/collections"},{name:category?.name ?? "Shop",href:listingUrl({category:searchParams.category},1)}]} />
+    <div className="grid gap-8 md:grid-cols-4"><aside className="rang-card self-start p-4"><h2 className="mb-3 font-semibold">Categories</h2><ul className="space-y-2"><li><Link href="/shop">All products</Link></li>{categories.map(c=><li key={c.id}><Link href={listingUrl({category:c.slug},1)} className={category?.slug===c.slug?"font-semibold text-brand":""}>{c.name}</Link></li>)}</ul></aside>
+    <section className="md:col-span-3"><h1 className="mb-3 text-2xl font-bold">{searchParams.q ? `Search results for ?${searchParams.q}?` : category?.name ?? "Clothing & fabrics"}</h1><p className="mb-4 text-sm text-ink-soft">{total} products | Prices in PKR</p><ShopFilters key={JSON.stringify(searchParams)} />
+    {items.length ? <div className="mt-6 grid grid-cols-2 gap-6 sm:grid-cols-3">{items.map((p,i)=><ProductCard key={p.id} product={p} priority={i===0} />)}</div> : <p className="mt-6">No products match these filters. <Link href="/shop" className="underline">Browse all products</Link></p>}
+    <nav aria-label="Product pagination" className="mt-8 flex items-center justify-between gap-4">{page > 1 ? <Link rel="prev" href={listingUrl(searchParams,page-1)}>Previous</Link> : <span />}<span>Page {page} of {Math.max(1,Math.ceil(total/24))}</span>{page*24 < total ? <Link rel="next" href={listingUrl(searchParams,page+1)}>Next</Link> : <span />}</nav></section></div></div>;
 }

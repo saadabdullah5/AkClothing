@@ -45,9 +45,17 @@ async function ensureCategoryCoverColumn() {
 // below runs in-process (no subprocess spawn), so it isn't affected by that limitation.
 const app = createApp();
 
-ensureCategoryCoverColumn().finally(() => {
+async function ensureSearchColumns() {
+  const { prisma } = await import("@/config/prisma");
+  for (const sql of ["ALTER TABLE `Product` ADD COLUMN `facts` JSON NULL", "ALTER TABLE `Order` ADD COLUMN `acquisition` JSON NULL"]) {
+    try { await prisma.$executeRawUnsafe(sql); }
+    catch (error) { if (!/duplicate column|already exists/i.test(String(error))) throw error; }
+  }
+}
+
+ensureCategoryCoverColumn().then(ensureSearchColumns).then(() => {
   app.listen(env.port, () => {
     console.log(`Backend API listening on http://localhost:${env.port}`);
     cleanupDemoData().catch((error) => console.error("Demo data cleanup failed:", error));
   });
-});
+}).catch(error => { console.error("Database compatibility check failed", error); process.exitCode = 1; });

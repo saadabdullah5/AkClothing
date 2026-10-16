@@ -1,5 +1,6 @@
 "use client";
 
+import ProductFactsEditor from "@/components/admin/ProductFactsEditor";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { apiFetch, ApiError } from "@/lib/api";
@@ -68,6 +69,7 @@ export default function EditProductPage() {
         method: "PATCH",
         token,
         body: JSON.stringify({
+          facts: product.facts ?? {},
           name: product.name,
           description: product.description,
           basePrice: Number(product.basePrice),
@@ -243,6 +245,7 @@ export default function EditProductPage() {
           />
         </div>
 
+        <ProductFactsEditor value={product.facts ?? {}} onChange={(facts) => setProduct({ ...product, facts })} />
         {saved && <p className="text-sm text-green-600 dark:text-green-400">Saved.</p>}
         <button type="submit" disabled={saving} className="rang-btn-primary">
           {saving ? "Saving..." : "Save Details"}

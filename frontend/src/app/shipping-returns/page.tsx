@@ -1,6 +1,10 @@
+import Link from "next/link";
+import { apiFetch } from "@/lib/api";
+import type { ShippingMethod } from "@/lib/types";
 export const metadata = { title: "Shipping & Returns" };
 
-export default function ShippingReturnsPage() {
+export default async function ShippingReturnsPage() {
+  const methods = await apiFetch<ShippingMethod[]>("/shipping-methods");
   return (
     <div className="mx-auto max-w-2xl">
       <h1 className="mb-6 text-2xl font-bold">Shipping &amp; Returns</h1>
@@ -16,6 +20,7 @@ export default function ShippingReturnsPage() {
         </ul>
       </section>
 
+      <section className="mb-8"><h2 className="mb-2 font-semibold">Delivery charges</h2><ul>{methods.map(method=><li key={method.id}>{method.name}: Rs. {Number(method.fee).toFixed(2)}{method.description ? ` ? ${method.description}` : ""}</li>)}</ul><p className="mt-3 text-sm">The final shipping charge and available payment methods are shown at checkout. For an arrival estimate for your city or help with a return, <Link href="/contact" className="underline">contact support</Link>. Do not send an item back before receiving return instructions.</p></section>
       <section>
         <h2 className="mb-2 font-semibold">Returns &amp; Exchanges</h2>
         <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-ink">

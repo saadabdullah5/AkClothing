@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { commerceEvent } from "@/lib/commerce-analytics";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 import { Product, ProductVariant } from "@/lib/types";
 import { useCart } from "@/lib/CartContext";
@@ -15,9 +16,10 @@ import { isAvailable, selectColorVariant, variantImages } from "@/lib/product-va
 const LOW_STOCK_THRESHOLD = 5;
 
 export default function ProductDetail({ product }: { product: Product }) {
+  const searchParams = useSearchParams();
   const colors = useMemo(() => Array.from(new Set(product.variants.map((v) => v.color))), [product]);
 
-  const [selectedId, setSelectedId] = useState(() => (product.variants.find(isAvailable) ?? product.variants[0])?.id);
+  const [selectedId, setSelectedId] = useState(() => (product.variants.find(v => v.id === searchParams.get("variant")) ?? product.variants.find(isAvailable) ?? product.variants[0])?.id);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
 
@@ -38,6 +40,8 @@ export default function ProductDetail({ product }: { product: Product }) {
   const lowStock = !outOfStock && (variant?.stockQty ?? 0) <= LOW_STOCK_THRESHOLD;
   const image = images[activeImage]?.url ?? images[0]?.url;
   const wishlisted = isWishlisted(product.slug);
+
+  useEffect(() => { if (variant) commerceEvent("view_item", { value: Number(price), items: [{ item_id: variant.id, item_name: product.name, price: Number(price) }] }); }, [variant?.id]);
 
   function selectVariant(next: ProductVariant | undefined) {
     if (!next) return;
@@ -74,6 +78,7 @@ export default function ProductDetail({ product }: { product: Product }) {
       qty: Math.min(qty, variant.stockQty),
       image,
     });
+    commerceEvent("add_to_cart", { value: Number(price) * Math.min(qty, variant.stockQty), items: [{ item_id: variant.id, item_name: product.name, price: Number(price), quantity: Math.min(qty, variant.stockQty) }] });
     setAdded(true);
   }
 
@@ -89,7 +94,7 @@ export default function ProductDetail({ product }: { product: Product }) {
       <div className="relative grid grid-cols-2 gap-2 self-start">
         {images.length > 0 ? images.map((img, i) => (
           <button key={img.id} type="button" aria-label={`Enlarge photo ${i + 1}`} aria-haspopup="dialog" onClick={() => { setActiveImage(i); setPreviewOpen(true); }} className={`rang-card relative aspect-[3/4] cursor-zoom-in overflow-hidden text-left ${i === activeImage ? "ring-2 ring-brand ring-offset-2" : ""}`}>
-            <Image src={img.url} alt={img.altText ?? product.name} fill className="object-cover transition-transform duration-500 hover:scale-105" />
+            <Image src={img.url} alt={img.altText ?? `${product.name} ? ${color}`} priority={i === 0} sizes="(max-width: 1024px) 50vw, 30vw" fill className="object-cover transition-transform duration-500 hover:scale-105" />
           </button>
         )) : (
           <div className="rang-card col-span-2 flex aspect-[3/4] items-center justify-center text-ink-soft">No image</div>
@@ -125,7 +130,7 @@ export default function ProductDetail({ product }: { product: Product }) {
         <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-ink">{product.description}</p>
 
         <div className="mt-6">
-          <p className="mb-2 text-sm font-semibold">Size</p>
+          <p className="mb-2 text-sm font-semibold">{sizes.every(s=>/unstitched/i.test(s)) ? "Construction" : "Size"}</p>
           <div className="flex flex-wrap gap-2">
             {sizes.map((s) => (
               <button
@@ -195,6 +200,7 @@ export default function ProductDetail({ product }: { product: Product }) {
 
         {whatsappNumber && (
           <a
+            onClick={() => commerceEvent("whatsapp_lead", { items: variant ? [{ item_id: variant.id }] : [] })}
             href={`https://wa.me/${whatsappNumber}?text=${whatsappText}`}
             target="_blank"
             rel="noopener noreferrer"

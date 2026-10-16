@@ -5,14 +5,19 @@ import { prisma } from "@/config/prisma";
 import { asyncHandler } from "@/utils/asyncHandler";
 import { authenticate, requirePermission } from "@/middleware/auth";
 import { slugify } from "@/utils/slugify";
+import { cleanCopy } from "@/modules/products/public-copy";
 
 const router = Router();
 
 router.get(
   "/",
-  asyncHandler(async (_req, res) => {
-    const categories = await prisma.category.findMany({ orderBy: { name: "asc" } });
-    res.json(categories);
+  asyncHandler(async (req, res) => {
+    const publicOnly = req.query.public === "1";
+    const categories = await prisma.category.findMany({
+      where: publicOnly ? { NOT: { slug: { startsWith: "dune-preview-" } }, OR: [{products:{some:{status:"ACTIVE"}}},{children:{some:{products:{some:{status:"ACTIVE"}}}}}] } : undefined,
+      orderBy: { name: "asc" },
+    });
+    res.json(publicOnly ? categories.map(c=>({...c,name:cleanCopy(c.name)})) : categories);
   })
 );
 

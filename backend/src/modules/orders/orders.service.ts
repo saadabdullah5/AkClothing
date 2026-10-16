@@ -11,6 +11,7 @@ export interface CheckoutItemInput {
 }
 
 export interface CheckoutInput {
+  acquisition?: { channel: string; landing: string };
   userId?: string;
   customerName: string;
   customerPhone: string;
@@ -142,6 +143,7 @@ export async function createOrder(input: CheckoutInput) {
         customerName: input.customerName,
         customerPhone: input.customerPhone,
         customerEmail: input.customerEmail,
+        acquisition: input.acquisition,
         shippingAddress: input.shippingAddress,
         subtotal,
         discountAmount,

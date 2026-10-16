@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-16T11:31:35.178Z",
+  "products": 73,
+  "crawled": 88,
+  "orphans": [
+    "digital-printed-collection-2026",
+    "lulusar-digital-printed-collection-2026",
+    "indian-booti-karandi-collection-2026",
+    "premium-airjet-dhanak-with-digital-wool-shawl-collection-2026",
+    "airjet-dhanak-with-embroidery-collection-2026",
+    "premium-airjet-dhanak-collection-2026",
+    "breeze-embroidery-collection-2026",
+    "premium-dhanak-two-piece-embroidery-collection-2026",
+    "premium-dhanak-embroidery-collection-2026",
+    "ethnic-hit-code-collection-2026",
+    "ethnic-wear-silk-collection-2026",
+    "qalamkar-winter-collection-2026",
+    "aneela-winter-collection-2026-03pcs-unstitched-frock",
+    "gucci-cora-winter-collection-2026",
+    "jazmin-premium-version",
+    "new-arrival-s-winter-dhanak-collection-2026-2027",
+    "new-arrival-s-winter-collection-2026-27",
+    "new-arrival-s-dhanak-collection-2026-2027"
+  ],
+  "sitemapUrls": 75,
+  "categories": 30,
+  "stockedCategories": 7,
+  "duplicateDescriptionGroups": 4,
+  "productsInDuplicateGroups": 15,
+  "baselineLab": [
+    {
+      "url": "https://akclothings.shop/",
+      "score": 0.97,
+      "LCP": 2138.631,
+      "CLS": 0.0001189934199993759,
+      "TBT": 73.99999999999977,
+      "transferBytes": 4058925
+    },
+    {
+      "url": "https://akclothings.shop/shop?category=dhanak-fabric",
+      "score": 0.73,
+      "LCP": 8411.575800000002,
+      "CLS": 0,
+      "TBT": 73.5,
+      "transferBytes": 2418163
+    },
+    {
+      "url": "https://akclothings.shop/product/brand-name-batik-premium-air-jet-2027",
+      "score": 0.9,
+      "LCP": 3410.7134999999994,
+      "CLS": 0,
+      "TBT": 45.5,
+      "transferBytes": 2574405
+    }
+  ]
+}

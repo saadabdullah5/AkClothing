@@ -43,6 +43,7 @@ export interface Banner {
 }
 
 export interface Product {
+  facts?: Record<string, string> | null;
   id: string;
   name: string;
   slug: string;

@@ -1,5 +1,6 @@
 "use client";
 
+import ProductFactsEditor from "@/components/admin/ProductFactsEditor";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch, ApiError } from "@/lib/api";
@@ -35,6 +36,7 @@ export default function NewProductPage() {
   const router = useRouter();
 
   const [categories, setCategories] = useState<Category[]>([]);
+  const [facts, setFacts] = useState<Record<string,string>>({});
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [basePrice, setBasePrice] = useState("");
@@ -96,6 +98,7 @@ export default function NewProductPage() {
         method: "POST",
         token,
         body: JSON.stringify({
+          facts,
           name,
           description,
           basePrice: Number(basePrice),
@@ -226,6 +229,7 @@ export default function NewProductPage() {
           </div>
         </div>
 
+        <ProductFactsEditor value={facts} onChange={setFacts} />
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
         <button type="submit" disabled={submitting || uploading} className="rang-btn-primary">

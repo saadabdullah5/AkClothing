@@ -29,10 +29,10 @@ export default function PrivacyPolicyPage() {
         </div>
 
         <div>
-          <h2 className="mb-1 font-semibold text-ink">Cookies</h2>
+          <h2 className="mb-1 font-semibold text-ink">Cookies and optional analytics</h2>
           <p>
             We use your browser&apos;s local storage to remember your cart and wishlist items between visits. This
-            stays on your device and isn&apos;t used for tracking or advertising.
+            stays on your device. If optional analytics is configured and you allow it, we record shopping events and a limited acquisition channel/landing page to understand order outcomes. Phone numbers, email addresses and order tracking queries are not included in analytics events.
           </p>
         </div>
 

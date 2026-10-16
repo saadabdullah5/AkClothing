@@ -11,8 +11,8 @@ export default function AboutPage() {
           inspect your order and pay when it arrives at your door.
         </p>
         <p>
-          We work directly with trusted couriers to make sure your order reaches you quickly and safely, and every
-          product listing goes through a quality check before it&apos;s added to the store.
+          Browse each product for its available colors, current price and listed fabric details. If you need
+          measurements or clarification before ordering, contact us with the product name or SKU.
         </p>
         <p>
           Have a question about an order, a product, or anything else? Visit our{" "}

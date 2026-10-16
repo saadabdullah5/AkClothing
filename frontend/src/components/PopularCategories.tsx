@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { Category } from "@/lib/types";
 
@@ -22,8 +23,8 @@ interface Props {
 }
 
 export default function PopularCategories({ categories, eyebrow = "Browse", heading = "Shop the Occasion" }: Props) {
-  if (categories.length === 0) return null;
   const [page, setPage] = useState(1);
+  if (categories.length === 0) return null;
   const pageSize = 6;
   const pageCount = Math.ceil(categories.length / pageSize);
   const shown = categories.slice((page - 1) * pageSize, page * pageSize);
@@ -40,7 +41,7 @@ export default function PopularCategories({ categories, eyebrow = "Browse", head
             className="group flex flex-col text-center text-sm font-bold transition duration-300 hover:-translate-y-1"
           >
             <span className={`relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl ${TILE_TONES[((page - 1) * pageSize + i) % TILE_TONES.length]}`}>
-              {c.imageUrl && <img src={c.imageUrl} alt="" className="absolute inset-0 h-full w-full object-cover opacity-100 transition-transform duration-500 group-hover:scale-105" />}
+              {c.imageUrl && <Image src={c.imageUrl} alt={c.name} fill sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />}
               {c.imageUrl && <span className="pointer-events-none absolute inset-0 bg-black/10" />}
             </span>
             <span className="mt-3 text-ink opacity-75 transition-all duration-300 group-hover:scale-105 group-hover:opacity-100">{c.name}</span>

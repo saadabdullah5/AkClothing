@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -109,6 +110,7 @@ function ReportsContent() {
 
   return (
     <div>
+<Link href="/admin/acquisition" className="mb-4 inline-block underline">Acquisition and COD outcomes</Link>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Reports</h1>
         <DateRangePicker value={range} onChange={handleRangeChange} />

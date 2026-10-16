@@ -1,5 +1,6 @@
 "use client";
 
+import { commerceEvent } from "@/lib/commerce-analytics";
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 
@@ -27,6 +28,7 @@ export default function WhatsAppButton({ message }: Props) {
 
   return (
     <a
+      onClick={() => commerceEvent("whatsapp_lead", {})}
       href={href}
       target="_blank"
       rel="noopener noreferrer"

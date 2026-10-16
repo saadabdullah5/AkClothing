@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { captureAcquisition, commerceEvent } from "@/lib/commerce-analytics";
 import { trackPageview } from "@/lib/tracking";
 
 // Tracks real storefront pageviews for the admin dashboard's visitor/traffic-source
@@ -12,8 +13,10 @@ export default function PageViewTracker() {
 
   useEffect(() => {
     if (!pathname || pathname.startsWith("/admin")) return;
-    const query = searchParams.toString();
-    trackPageview(query ? `${pathname}?${query}` : pathname);
+    if (/^\/(account|checkout|track|order-confirmation|reset-password|forgot-password)(\/|$)/.test(pathname)) return;
+    captureAcquisition();
+    trackPageview(pathname);
+    commerceEvent("page_view", { page_location: location.origin + pathname });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, searchParams]);
 

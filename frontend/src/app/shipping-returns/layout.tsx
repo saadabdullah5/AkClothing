@@ -1,0 +1,2 @@
+export const metadata = { title: "Shipping & Returns", description: "Shipping & Returns for ak.shop customers in Pakistan. Find store information and help with your order.", alternates: { canonical: "https://akclothings.shop/shipping-returns" }, openGraph: { url: "https://akclothings.shop/shipping-returns" } };
+export default function Layout({ children }: { children: React.ReactNode }) { return children; }

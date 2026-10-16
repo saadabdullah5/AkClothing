@@ -6,6 +6,8 @@ import { apiFetch, ApiError } from "@/lib/api";
 import BrandMark from "@/components/BrandMark";
 
 const FOOTER_LINKS = [
+  { href: "/collections", label: "Collections" },
+  { href: "/shop", label: "All products" },
   { href: "/about", label: "About Us" },
   { href: "/contact", label: "Contact Us" },
   { href: "/faq", label: "FAQ" },

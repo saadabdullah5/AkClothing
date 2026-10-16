@@ -1,24 +1,12 @@
+import { guides } from "@/content/guides";
 import type { MetadataRoute } from "next";
+import { getCatalog, getPublicCategories } from "@/lib/catalog";
 import { apiFetch } from "@/lib/api";
-import { Product } from "@/lib/types";
-
+import type { Collection } from "@/lib/types";
+import { absoluteUrl } from "@/lib/seo";
+export const dynamic = "force-dynamic";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-
-  const staticRoutes: MetadataRoute.Sitemap = [
-    { url: `${siteUrl}/`, changeFrequency: "daily", priority: 1 },
-    { url: `${siteUrl}/shop`, changeFrequency: "daily", priority: 0.9 },
-  ];
-
-  try {
-    const { items } = await apiFetch<{ items: Product[] }>("/products?pageSize=100");
-    const productRoutes: MetadataRoute.Sitemap = items.map((p) => ({
-      url: `${siteUrl}/product/${p.slug}`,
-      changeFrequency: "weekly",
-      priority: 0.8,
-    }));
-    return [...staticRoutes, ...productRoutes];
-  } catch {
-    return staticRoutes;
-  }
+ const [products,categories,collections] = await Promise.all([getCatalog(),getPublicCategories(),apiFetch<Collection[]>("/collections")]);
+ const routes=[...guides.map(g=>`/guides/${g.slug}`),"/","/shop","/collections","/about","/contact","/faq","/shipping-returns","/privacy-policy","/terms",...categories.map(c=>`/shop?category=${encodeURIComponent(c.slug)}`),...collections.map(c=>`/collections/${c.slug}`),...products.map(p=>`/product/${p.slug}`)];
+ return [...new Set(routes)].map(path=>({url:absoluteUrl(path)}));
 }

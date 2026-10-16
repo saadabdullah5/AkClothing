@@ -6,6 +6,8 @@ import { asyncHandler } from "@/utils/asyncHandler";
 import { authenticate, requirePermission } from "@/middleware/auth";
 import { AppError } from "@/utils/AppError";
 import { slugify } from "@/utils/slugify";
+import { productFactsSchema } from "./product-facts";
+import { publicCopy } from "./public-copy";
 
 const router = Router();
 
@@ -25,8 +27,8 @@ const listQuerySchema = z.object({
   q: z.string().optional(),
   featured: z.coerce.boolean().optional(),
   sort: z.enum(["newest", "price_asc", "price_desc"]).default("newest"),
-  page: z.coerce.number().min(1).default(1),
-  pageSize: z.coerce.number().min(1).max(100).default(24),
+  page: z.coerce.number().int().min(1).max(1000000).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(24),
 });
 
 const SORT_ORDER_BY: Record<string, Prisma.ProductOrderByWithRelationInput> = {
@@ -74,12 +76,12 @@ router.get(
         include: { images: true, variants: true, category: true, reviews: { select: { rating: true } } },
         skip: (query.page - 1) * query.pageSize,
         take: query.pageSize,
-        orderBy: SORT_ORDER_BY[query.sort],
+        orderBy: [SORT_ORDER_BY[query.sort], { id: "asc" }],
       }),
       prisma.product.count({ where }),
     ]);
 
-    res.json({ items: items.map(withRatingSummary), total, page: query.page, pageSize: query.pageSize });
+    res.json({ items: items.map(p => publicCopy(withRatingSummary(p))), total, page: query.page, pageSize: query.pageSize });
   })
 );
 
@@ -99,7 +101,7 @@ router.get(
     if (!product || product.status !== "ACTIVE") {
       throw new AppError(404, "Product not found");
     }
-    res.json(withRatingSummary(product));
+    res.json(publicCopy(withRatingSummary(product)));
   })
 );
 
@@ -120,6 +122,7 @@ const createProductSchema = z.object({
   featured: z.boolean().default(false),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
+  facts: productFactsSchema.optional(),
   variants: z.array(variantInputSchema.extend({
     images: z.array(z.object({ url: z.string().url() })).default([]),
   })).min(1),
@@ -147,6 +150,7 @@ router.post(
         featured: input.featured,
         seoTitle: input.seoTitle,
         seoDescription: input.seoDescription,
+        facts: input.facts,
         variants: {
           create: input.variants.map((v) => ({
             size: v.size,
@@ -196,6 +200,7 @@ router.get(
 );
 
 const updateProductSchema = z.object({
+  facts: productFactsSchema.optional(),
   name: z.string().min(2).optional(),
   description: z.string().optional(),
   basePrice: z.number().positive().optional(),

@@ -1,3 +1,4 @@
+import { analyticsAllowed } from "./commerce-analytics";
 const SESSION_KEY = "ak-shop-session-id";
 
 export function getSessionId(): string {
@@ -15,11 +16,12 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 // Fire-and-forget — a tracking failure should never affect the page. Never called for
 // /admin/* paths (see PageViewTracker), so admin panel usage never inflates visitor stats.
 export function trackPageview(path: string) {
+  if (!analyticsAllowed()) return;
   try {
     const body = JSON.stringify({
       path,
       sessionId: getSessionId(),
-      referrer: document.referrer || undefined,
+      referrer: document.referrer ? new URL(document.referrer).origin : undefined,
     });
     if (navigator.sendBeacon) {
       navigator.sendBeacon(`${API_URL}/track/pageview`, new Blob([body], { type: "application/json" }));

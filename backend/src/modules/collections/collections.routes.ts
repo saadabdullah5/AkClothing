@@ -12,7 +12,7 @@ router.get(
   "/",
   asyncHandler(async (_req, res) => {
     const collections = await prisma.collection.findMany({
-      where: { active: true },
+      where: { active: true, products: { some: { status: "ACTIVE" } } },
       select: { id: true, name: true, slug: true, description: true, imageUrl: true, position: true },
       orderBy: { position: "asc" },
     });

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { acquisition, commerceEvent } from "@/lib/commerce-analytics";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/CartContext";
@@ -19,6 +20,8 @@ export default function CheckoutPage() {
   const { lines, subtotal, clear } = useCart();
   const { user, token } = useCustomerAuth();
   const router = useRouter();
+  const checkoutTracked = useRef(false);
+  useEffect(() => { if (lines.length && !checkoutTracked.current) { checkoutTracked.current = true; commerceEvent("begin_checkout", { value: subtotal, items: lines.map(l=>({item_id:l.variantId,price:l.unitPrice,quantity:l.qty})) }); } }, [lines, subtotal]);
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -110,6 +113,7 @@ export default function CheckoutPage() {
         method: "POST",
         token: token ?? undefined,
         body: JSON.stringify({
+          acquisition: acquisition(),
           customerName: name,
           customerPhone: phone,
           customerEmail: email || undefined,
@@ -120,6 +124,7 @@ export default function CheckoutPage() {
           paymentMethod,
         }),
       });
+      commerceEvent("order_placed", { transaction_id: order.id, value: Number(order.total), items: lines.map(l=>({item_id:l.variantId,price:l.unitPrice,quantity:l.qty})) });
       clear();
       router.push(`/order-confirmation/${order.orderNumber}?phone=${encodeURIComponent(phone)}`);
       // Not resetting `submitting` here — see frontend/src/app/admin/login/page.tsx for why.

@@ -1,5 +1,6 @@
 "use client";
 
+import { commerceEvent } from "@/lib/commerce-analytics";
 import Image from "next/image";
 import Link from "next/link";
 import { Product } from "@/lib/types";
@@ -8,7 +9,7 @@ import StarRating from "./StarRating";
 
 const LOW_STOCK_THRESHOLD = 5;
 
-export default function ProductCard({ product }: { product: Product }) {
+export default function ProductCard({ product, priority = false }: { product: Product; priority?: boolean }) {
   const { isWishlisted, toggle } = useWishlist();
   const image = product.images[0]?.url;
   const inStockVariants = product.variants.filter((v) => !v.isOutOfStock && v.stockQty > 0);
@@ -18,12 +19,14 @@ export default function ProductCard({ product }: { product: Product }) {
   const wishlisted = isWishlisted(product.slug);
 
   return (
-    <Link href={`/product/${product.slug}`} className="rang-card group block overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:rotate-[-0.3deg]">
+    <Link onClick={() => commerceEvent("select_item", { items: [{ item_id: product.variants[0]?.id ?? product.id }] })} href={`/product/${product.slug}`} className="rang-card group block overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:rotate-[-0.3deg]">
       <div className="relative aspect-[4/5] w-full overflow-hidden bg-ink/5">
         {image ? (
           <Image
             src={image}
             alt={product.images[0]?.altText ?? product.name}
+            priority={priority}
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             fill
             className="object-cover transition duration-500 group-hover:scale-105"
           />
