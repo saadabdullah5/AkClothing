@@ -1,5 +1,4 @@
 import { cache } from "react";
-import Link from "next/link";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { variantImages } from "@/lib/product-variants";
 import { absoluteUrl, jsonLd as serializeJsonLd, plainText, SITE_URL } from "@/lib/seo";
@@ -84,7 +83,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(structuredData) }} />
       <Breadcrumbs items={[{name:"Home",href:"/"},{name:product.category.name,href:`/shop?category=${encodeURIComponent(product.category.slug)}`},{name:product.name,href:`/product/${product.slug}`}]} />
       <ProductDetail key={product.id} product={product} />
-      <section className="mt-8"><h2 className="text-xl font-semibold">Product details</h2><dl className="mt-3 grid gap-3 sm:grid-cols-2">{Object.entries(facts).filter(([k,v])=>v && k !== "variantGrouping").map(([key,value])=><div key={key}><dt className="font-medium capitalize">{key.replace(/([A-Z])/g," $1")}</dt><dd className="whitespace-pre-line text-sm">{value}</dd></div>)}</dl><p className="mt-4 text-sm">Delivery charges are shown at checkout. <Link href="/shipping-returns" className="underline">Shipping and returns</Link> ? <Link href="/contact" className="underline">Ask about this product</Link></p></section>
       <RelatedProducts products={related} />
     </div>
   );

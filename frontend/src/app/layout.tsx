@@ -3,7 +3,7 @@ import { getPublicCategories } from "@/lib/catalog";
 import { SITE_URL, jsonLd } from "@/lib/seo";
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Roboto_Slab, Inter, Jost } from "next/font/google";
+import { Roboto_Slab, Inter, Manrope } from "next/font/google";
 import "./globals.css";
 import "./dune.css";
 import { CartProvider } from "@/lib/CartContext";
@@ -39,7 +39,7 @@ const inter = Inter({
 // Geometric sans used only by the storefront's "Rang" redesign (via the `font-rang`
 // utility, applied in Header/Footer/SiteChrome) — admin keeps Inter (--font-body) as its
 // default everywhere else, so this never affects admin styling.
-const jost = Jost({
+const manrope = Manrope({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-rang-body",
@@ -95,7 +95,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const accentVars = colorTokenVars("accent", isValidHex(branding.accentColor) ? branding.accentColor : DEFAULT_ACCENT_HEX);
 
   return (
-    <html lang="en" className={`${robotoSlab.variable} ${inter.variable} ${jost.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${robotoSlab.variable} ${inter.variable} ${manrope.variable}`} suppressHydrationWarning>
       <head>
         {/* Applies the saved (or system) color scheme to <html> before first paint,
             so there's no flash of the wrong theme while React hydrates. */}

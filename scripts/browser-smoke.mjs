@@ -9,7 +9,7 @@ try {
  await page.goto(base+'/product/'+catalog.items[0].slug,{waitUntil:'networkidle'});
  await page.getByRole('button',{name:'Enlarge photo 1',exact:true}).click();
  await page.getByRole('dialog').waitFor({state:'visible'});await page.keyboard.press('Escape');await page.getByRole('dialog').waitFor({state:'detached'});
- await page.getByRole('button',{name:'Add to Cart',exact:true}).click();await page.goto(base+'/cart',{waitUntil:'networkidle'});
+ await page.locator('.product-actions').getByRole('button',{name:'Add to Cart',exact:true}).click();await page.goto(base+'/cart',{waitUntil:'networkidle'});
  assert.ok((await page.locator('body').innerText()).includes(catalog.items[0].name));
  await page.goto(base+'/checkout',{waitUntil:'networkidle'});assert.ok((await page.locator('body').innerText()).includes('Order Summary'));
  for(const path of ['/','/collections','/shop']){await page.goto(base+path,{waitUntil:'networkidle'});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),'Mobile horizontal overflow at '+path);await page.screenshot({path:'.local/mobile-'+(path.replaceAll('/','')||'home')+'.png',fullPage:true});}
