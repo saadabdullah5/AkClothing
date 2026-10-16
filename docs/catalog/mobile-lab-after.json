@@ -1,0 +1,26 @@
+[
+  {
+    "url": "https://akclothings.shop/",
+    "score": 0.97,
+    "LCP": 2487.0425,
+    "CLS": 0.0001011444069994695,
+    "TBT": 20.5,
+    "transferBytes": 1531880
+  },
+  {
+    "url": "https://akclothings.shop/shop?category=dhanak-fabric",
+    "score": 0.87,
+    "LCP": 3681.240209999999,
+    "CLS": 0,
+    "TBT": 76.5,
+    "transferBytes": 1666979
+  },
+  {
+    "url": "https://akclothings.shop/product/brand-name-batik-premium-air-jet-2027",
+    "score": 0.87,
+    "LCP": 3774.95104,
+    "CLS": 0,
+    "TBT": 44,
+    "transferBytes": 1640193
+  }
+]

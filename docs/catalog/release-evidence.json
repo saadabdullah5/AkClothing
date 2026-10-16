@@ -1,0 +1,59 @@
+﻿{
+    "date":  "2026-10-16T12:08:58.227Z",
+    "products":  73,
+    "crawled":  88,
+    "orphans":  [
+
+                ],
+    "sitemapUrls":  89,
+    "probes":  [
+                   {
+                       "path":  "/cart",
+                       "status":  200,
+                       "noindex":  true
+                   },
+                   {
+                       "path":  "/checkout",
+                       "status":  200,
+                       "noindex":  true
+                   },
+                   {
+                       "path":  "/wishlist",
+                       "status":  200,
+                       "noindex":  true
+                   },
+                   {
+                       "path":  "/account/login",
+                       "status":  200,
+                       "noindex":  true
+                   },
+                   {
+                       "path":  "/track",
+                       "status":  200,
+                       "noindex":  true
+                   },
+                   {
+                       "path":  "/shop?page=0",
+                       "status":  404,
+                       "noindex":  true
+                   },
+                   {
+                       "path":  "/shop?page=99999",
+                       "status":  404,
+                       "noindex":  true
+                   }
+               ],
+    "releaseChecks":  {
+                          "date":  "2026-10-16T12:08:40.572Z",
+                          "productSchemasChecked":  73,
+                          "publicCategories":  7,
+                          "page1Products":  24,
+                          "page2Products":  24,
+                          "overlap":  0,
+                          "hostRedirect":  308,
+                          "privateNoindex":  true,
+                          "invalid404":  true,
+                          "feedItems":  0
+                      },
+    "mobileBrowser":  "Passed: preview, cart, checkout rendering, no overflow/runtime errors; no live order submitted"
+}
