@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import { Roboto_Slab, Inter, Manrope } from "next/font/google";
 import "./globals.css";
 import "./dune.css";
+import "./terracotta.css";
 import { CartProvider } from "@/lib/CartContext";
 import { WishlistProvider } from "@/lib/WishlistContext";
 import { CustomerAuthProvider } from "@/lib/CustomerAuthContext";

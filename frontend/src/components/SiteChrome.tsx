@@ -21,7 +21,7 @@ export default function SiteChrome({ categories, logoUrl, children }: Props) {
   }
 
   return (
-    <div className={`dune-storefront flex min-h-screen flex-col ${pathname?.startsWith("/product/") ? "product-storefront" : ""}`}>
+    <div className={`dune-storefront warm-terracotta flex min-h-screen flex-col ${pathname?.startsWith("/product/") ? "product-storefront" : ""}`}>
       <Header categories={categories} logoUrl={logoUrl} />
       <main className="font-rang mx-auto w-full max-w-6xl flex-1 px-4 py-8 text-ink">{children}</main>
       <Footer logoUrl={logoUrl} />
