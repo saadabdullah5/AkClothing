@@ -25,7 +25,9 @@ interface Props {
 export default function PopularCategories({ categories, eyebrow = "Browse", heading = "Shop the Occasion" }: Props) {
   const [page, setPage] = useState(1);
   if (categories.length === 0) return null;
-  const pageSize = 6;
+  // Keep the homepage collection browse section balanced: eight actual categories
+  // per page, arranged as a four-by-two grid on large screens.
+  const pageSize = 8;
   const pageCount = Math.ceil(categories.length / pageSize);
   const shown = categories.slice((page - 1) * pageSize, page * pageSize);
 
@@ -33,7 +35,7 @@ export default function PopularCategories({ categories, eyebrow = "Browse", head
     <section className="font-rang mt-16">
       <p className="rang-section-tag">{eyebrow}</p>
       <h2 className="mb-6 mt-1 font-display text-2xl font-bold text-ink">{heading}</h2>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {shown.map((c, i) => (
           <Link
             key={c.id}
